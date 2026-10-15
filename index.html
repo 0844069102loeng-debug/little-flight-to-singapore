@@ -1,0 +1,914 @@
+
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#10142d">
+  <title>A Little Flight to Singapore 🩵</title>
+
+  <style>
+    :root {
+      --night: #10142d;
+      --indigo: #202653;
+      --purple: #8172d8;
+      --lavender: #c7bdff;
+      --blue: #91dcff;
+      --white: #f8f7ff;
+      --muted: #c0c6ec;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      overflow-x: hidden;
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      color: var(--white);
+      background:
+        radial-gradient(ellipse at 20% 20%, #34316b 0%, transparent 42%),
+        radial-gradient(ellipse at 85% 75%, #33245f 0%, transparent 40%),
+        linear-gradient(160deg, #090f28, #171b42 48%, #211a46);
+    }
+
+    button { font-family: inherit; }
+
+    button:focus-visible {
+      outline: 2px solid var(--blue);
+      outline-offset: 5px;
+    }
+
+    .stars {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .stars span {
+      position: absolute;
+      color: white;
+      opacity: .7;
+      text-shadow: 0 0 12px #b8bfff;
+      animation: twinkle 3.5s ease-in-out infinite;
+    }
+
+    .stars span:nth-child(1) { top: 12%; left: 12%; font-size: 17px; }
+    .stars span:nth-child(2) { top: 24%; right: 16%; font-size: 24px; animation-delay: 1s; }
+    .stars span:nth-child(3) { bottom: 25%; left: 23%; font-size: 15px; animation-delay: 1.5s; }
+    .stars span:nth-child(4) { bottom: 17%; right: 20%; font-size: 22px; animation-delay: .5s; }
+    .stars span:nth-child(5) { top: 45%; left: 48%; font-size: 10px; animation-delay: .8s; }
+    .stars span:nth-child(6) { top: 70%; left: 75%; font-size: 13px; animation-delay: 1.8s; }
+    .stars span:nth-child(7) { top: 8%; right: 38%; font-size: 11px; animation-delay: 2s; }
+    .stars span:nth-child(8) { top: 55%; left: 8%; font-size: 12px; animation-delay: 1.2s; }
+
+    .content {
+      position: relative;
+      z-index: 1;
+      min-height: 100svh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 28px 22px;
+      transition: opacity .8s ease, transform .8s ease;
+    }
+
+    .content.leaving {
+      opacity: 0;
+      transform: translateY(-14px);
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      font-size: 11px;
+      letter-spacing: 3.5px;
+      color: var(--lavender);
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      font-size: clamp(30px, 7vw, 44px);
+      font-weight: 500;
+      line-height: 1.35;
+      margin: 0 0 16px;
+      color: var(--white);
+      text-shadow: 0 0 24px #9c8dff35;
+    }
+
+    .intro-message {
+      font-size: 15px;
+      line-height: 1.9;
+      max-width: 330px;
+      margin: 0 0 30px;
+      color: var(--muted);
+    }
+
+    .plane-button {
+      position: relative;
+      width: 150px;
+      height: 115px;
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+      animation: float 4s ease-in-out infinite;
+      -webkit-tap-highlight-color: transparent;
+      filter: drop-shadow(0 0 13px #9b9aff55);
+    }
+
+    .plane-button::after {
+      content: "";
+      position: absolute;
+      width: 85px;
+      height: 2px;
+      left: -22px;
+      top: 60%;
+      border-radius: 50%;
+      background: linear-gradient(90deg, transparent, #91dcff99, #d5c7ff);
+      filter: blur(2px);
+      transform: rotate(-17deg);
+      opacity: .7;
+    }
+
+    .plane-button svg {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+
+    .plane-button.flying {
+      animation: planeFly 1.8s cubic-bezier(.45, 0, .8, .4) forwards;
+      pointer-events: none;
+    }
+
+    .tap-hint {
+      margin-top: 18px;
+      font-size: 11px;
+      letter-spacing: 2px;
+      color: #aeb9e9;
+      animation: hintGlow 3s ease-in-out infinite;
+    }
+
+    /* Music control */
+    .music-button {
+      position: fixed;
+      z-index: 20;
+      top: 16px;
+      right: 16px;
+      display: none;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      color: var(--white);
+      background: #202653cc;
+      border: 1px solid #9a9ce477;
+      border-radius: 28px;
+      cursor: pointer;
+      font-size: 12px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 0 18px #8172d822;
+    }
+
+    .music-button.visible { display: flex; }
+
+    .music-button.playing .music-icon {
+      animation: musicPulse 1.2s ease-in-out infinite;
+    }
+
+    .music-icon { font-size: 16px; }
+
+    .journey {
+      position: fixed;
+      inset: 0;
+      z-index: 5;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 30px 24px;
+      text-align: center;
+      overflow-y: auto;
+      background:
+        radial-gradient(ellipse at 50% 30%, #29285c88, transparent 60%),
+        linear-gradient(160deg, #0c122d, #191b45 55%, #251b4a);
+    }
+
+    .journey.show {
+      display: flex;
+      animation: sceneIn 1.1s ease both;
+    }
+
+    .wish-content {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      animation: wishIn .75s cubic-bezier(.2,.7,.2,1) both;
+    }
+
+    .journey-star {
+      font-size: 48px;
+      color: #fff3c4;
+      margin-bottom: 22px;
+      text-shadow: 0 0 12px #c7bdff, 0 0 30px #8172d8;
+      animation: twinkle 2.5s ease-in-out infinite;
+    }
+
+    .journey h2 {
+      color: var(--white);
+      font-size: clamp(24px, 5vw, 32px);
+      font-weight: 500;
+      line-height: 1.45;
+      margin: 0 0 18px;
+      text-shadow: 0 0 18px #a69bff25;
+    }
+
+    .journey p {
+      color: #d0d5f5;
+      font-size: 15px;
+      line-height: 2;
+      max-width: 390px;
+      width: 100%;
+      margin: 0;
+      white-space: pre-line;
+    }
+
+    .wish-content.changing { animation: wishOut .23s ease both; }
+
+    .next-button {
+      margin-top: 28px;
+      border: 1px solid #8d91d9;
+      border-radius: 30px;
+      padding: 13px 25px;
+      background: linear-gradient(135deg, #7773d744, #91dcff15);
+      color: var(--white);
+      font-size: 14px;
+      cursor: pointer;
+      transition: background .3s ease, transform .3s ease, box-shadow .3s ease;
+      box-shadow: 0 0 20px #8172d818;
+    }
+
+    .next-button:hover {
+      background: #8172d855;
+      transform: translateY(-2px);
+      box-shadow: 0 0 25px #8172d844;
+    }
+
+    .next-button:active { transform: scale(.97); }
+
+    /* Singapore skyline */
+    .skyline {
+      display: none;
+      position: relative;
+      width: min(100%, 360px);
+      height: 155px;
+      margin: 28px auto 0;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 4px;
+      border-bottom: 2px solid #6d80c9;
+      filter: drop-shadow(0 0 12px #8172d822);
+    }
+
+    .skyline.show {
+      display: flex;
+      animation: skylineIn 1.5s ease both;
+    }
+
+    .building {
+      position: relative;
+      background: linear-gradient(180deg, #535b9b, #242c5b);
+      border: 1px solid #7485cc;
+      border-radius: 4px 4px 0 0;
+      flex-shrink: 0;
+      box-shadow: 0 0 12px #6974d522;
+    }
+
+    .building::after {
+      content: "";
+      position: absolute;
+      inset: 10px 5px 5px;
+      background: repeating-linear-gradient(90deg, #b9d9ff 0 3px, transparent 3px 8px);
+      opacity: .8;
+    }
+
+    .b1 { width: 25px; height: 55px; }
+    .b2 { width: 23px; height: 75px; }
+    .b3 { width: 25px; height: 48px; }
+    .b4 { width: 25px; height: 90px; }
+    .b5 { width: 24px; height: 65px; }
+    .b6 { width: 22px; height: 42px; }
+
+    .marina {
+      position: relative;
+      width: 79px;
+      height: 67px;
+      margin: 0 1px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .marina-tower {
+      width: 17px;
+      height: 56px;
+      margin: 0 2px;
+      background: linear-gradient(180deg, #8b9fe0, #3d4b85);
+      border: 1px solid #a2b7f5;
+      border-radius: 5px 5px 0 0;
+      box-shadow: 0 0 10px #91dcff20;
+    }
+
+    .marina-top {
+      position: absolute;
+      top: 1px;
+      width: 76px;
+      height: 9px;
+      border-radius: 50%;
+      background: #a7b6f5;
+      box-shadow: 0 0 12px #b4c7ff66;
+      transform: rotate(-3deg);
+    }
+
+    /* Merlion statue */
+    .merlion {
+      width: 67px;
+      height: 102px;
+      flex-shrink: 0;
+      margin: 0 1px -1px;
+      overflow: visible;
+      filter: drop-shadow(0 0 9px #91dcff55);
+    }
+
+    .water-stream {
+      stroke-dasharray: 4 5;
+      animation: waterFlow 1.2s linear infinite;
+    }
+
+    .caption {
+      margin-top: 16px;
+      font-size: 11px;
+      letter-spacing: 2px;
+      color: #aeb9e9;
+    }
+
+    @keyframes twinkle {
+      0%, 100% { opacity: .4; transform: scale(.9); }
+      50% { opacity: 1; transform: scale(1.12); }
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0) rotate(-1deg); }
+      50% { transform: translateY(-10px) rotate(1deg); }
+    }
+
+    @keyframes planeFly {
+      0% { transform: translate(0,0) rotate(0) scale(1); opacity: 1; }
+      60% { opacity: 1; }
+      100% { transform: translate(115vw,-42vh) rotate(-12deg) scale(.8); opacity: 0; }
+    }
+
+    @keyframes sceneIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes wishIn {
+      from { opacity: 0; transform: translateY(12px); filter: blur(3px); }
+      to { opacity: 1; transform: translateY(0); filter: blur(0); }
+    }
+
+    @keyframes wishOut {
+      to { opacity: 0; transform: translateY(-5px); filter: blur(2px); }
+    }
+
+    @keyframes skylineIn {
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes hintGlow {
+      0%, 100% { opacity: .65; }
+      50% { opacity: 1; }
+    }
+
+    @keyframes musicPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.15); }
+    }
+
+    @keyframes waterFlow {
+      to { stroke-dashoffset: -18; }
+    }
+
+    @media (max-width: 390px) {
+      .skyline { gap: 3px; transform: scale(.94); transform-origin: center bottom; }
+      .merlion { width: 57px; }
+      .marina { width: 69px; }
+      .marina-top { width: 68px; }
+    }
+
+    @media (max-height: 720px) {
+      .journey {
+        justify-content: flex-start;
+        padding-top: 28px;
+        padding-bottom: 30px;
+      }
+
+      .journey-star { margin-bottom: 12px; }
+      .journey p { line-height: 1.8; }
+      .next-button { margin-top: 18px; }
+      .skyline { margin-top: 18px; }
+      .merlion { height: 88px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="stars" aria-hidden="true">
+    <span>✦</span><span>✧</span><span>✦</span><span>✧</span>
+    <span>·</span><span>✧</span><span>·</span><span>✦</span>
+  </div>
+
+  <!-- Music toggle -->
+  <button class="music-button" id="musicButton" aria-label="เปิดหรือปิดดนตรี">
+    <span class="music-icon" id="musicIcon">♫</span>
+    <span id="musicLabel">เปิดเพลง</span>
+  </button>
+
+  <main class="content" id="intro">
+    <div class="eyebrow">A LITTLE SURPRISE FOR YOU AUMAIM♡</div>
+
+    <h1>A Little Flight<br>to Singapore ♡</h1>
+
+    <p class="intro-message">
+      A tiny journey filled with love,<br>
+      little wishes, and a piece of my heart. 🩵
+    </p>
+
+<button class="plane-button" id="planeButton" aria-label="Start your little journey">
+  <svg viewBox="0 0 180 120" xmlns="http://www.w3.org/2000/svg"
+       role="img" aria-label="White passenger airplane">
+    <defs>
+      <linearGradient id="planeBody" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#ffffff"/>
+        <stop offset="55%" stop-color="#edf5ff"/>
+        <stop offset="100%" stop-color="#b8cbea"/>
+      </linearGradient>
+      <linearGradient id="planeWing" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#ffffff"/>
+        <stop offset="100%" stop-color="#a9c4e9"/>
+      </linearGradient>
+      <filter id="planeGlow" x="-40%" y="-40%" width="180%" height="180%">
+        <feGaussianBlur stdDeviation="3" result="blur"/>
+        <feMerge>
+          <feMergeNode in="blur"/>
+          <feMergeNode in="SourceGraphic"/>
+        </feMerge>
+      </filter>
+    </defs>
+
+    <!-- Soft blue-violet glow -->
+    <ellipse cx="89" cy="62" rx="57" ry="19"
+      fill="#91dcff" opacity=".12" filter="url(#planeGlow)"/>
+
+    <!-- Rear tail -->
+    <path d="M35 57 L20 40 Q18 37 22 37 L47 45 Z"
+      fill="url(#planeWing)" stroke="#a9c6ec" stroke-width="1"/>
+
+    <!-- Far wing -->
+    <path d="M76 54 L103 25 Q107 21 112 24
+      L99 58 L82 65 Z"
+      fill="url(#planeWing)" stroke="#a9c6ec" stroke-width="1"/>
+
+    <!-- Main fuselage -->
+    <path d="M17 64
+      L62 55
+      L139 48
+      Q151 47 159 52
+      Q163 55 157 58
+      L93 72
+      L43 77
+      Q30 77 17 70
+      Q12 67 17 64 Z"
+      fill="url(#planeBody)" stroke="#b8cbea" stroke-width="1.2"
+      stroke-linejoin="round"/>
+
+    <!-- Cockpit windows -->
+    <path d="M148 51 Q154 51 157 53 L150 56 L146 56 Z"
+      fill="#82c9f5"/>
+
+    <!-- Near wing -->
+    <path d="M69 65 L92 91 Q96 95 101 92
+      L94 66 L83 59 Z"
+      fill="url(#planeWing)" stroke="#a9c6ec" stroke-width="1"/>
+
+    <!-- Wing detail -->
+    <path d="M78 67 L91 83"
+      fill="none" stroke="#d5e7fb" stroke-width="1.5"
+      stroke-linecap="round"/>
+
+    <!-- Passenger windows -->
+    <g fill="#8fc9f0">
+      <rect x="113" y="53" width="4" height="2.5" rx="1.2" transform="rotate(-8 113 53)"/>
+      <rect x="105" y="55" width="4" height="2.5" rx="1.2" transform="rotate(-8 105 55)"/>
+      <rect x="97" y="56" width="4" height="2.5" rx="1.2" transform="rotate(-8 97 56)"/>
+      <rect x="89" y="57" width="4" height="2.5" rx="1.2" transform="rotate(-8 89 57)"/>
+      <rect x="81" y="58" width="4" height="2.5" rx="1.2" transform="rotate(-8 81 58)"/>
+      <rect x="73" y="59" width="4" height="2.5" rx="1.2" transform="rotate(-8 73 59)"/>
+    </g>
+
+    <!-- Soft luminous trail -->
+    <path d="M8 83 Q25 79 42 82"
+      fill="none" stroke="#91dcff" stroke-width="2"
+      stroke-linecap="round" opacity=".9"/>
+    <path d="M17 89 Q29 86 38 88"
+      fill="none" stroke="#c7bdff" stroke-width="1.5"
+      stroke-linecap="round" opacity=".75"/>
+
+    <!-- Tiny sparkle -->
+    <path d="M125 27 L127 33 L133 35 L127 37 L125 43
+      L123 37 L117 35 L123 33 Z"
+      fill="#d9d2ff" opacity=".9"/>
+  </svg>
+</button>
+
+    <div class="tap-hint">TAP THE AIRPLANE TO BEGIN ✦</div>
+  </main>
+
+  <section class="journey" id="journey">
+    <div class="wish-content" id="wishContent">
+      <div class="journey-star" id="journeyStar">✦</div>
+      <h2 id="journeyTitle">A Little Wish for You 🩵</h2>
+      <p id="journeyMessage"></p>
+
+      <div class="skyline" id="skyline" aria-label="Singapore skyline">
+
+        <div class="building b1"></div>
+        <div class="building b2"></div>
+        <div class="building b3"></div>
+
+        <!-- Marina Bay Sands -->
+        <div class="marina" aria-label="Marina Bay Sands">
+          <div class="marina-tower"></div>
+          <div class="marina-tower"></div>
+          <div class="marina-tower"></div>
+          <div class="marina-top"></div>
+        </div>
+
+        <div class="building b4"></div>
+
+        <!-- Merlion: lion head, fish body and fountain -->
+        <svg class="merlion" viewBox="0 0 100 150" xmlns="http://www.w3.org/2000/svg"
+             role="img" aria-label="Merlion statue spouting water">
+
+          <defs>
+            <linearGradient id="lionBody" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#e5efff"/>
+              <stop offset="45%" stop-color="#9db9ed"/>
+              <stop offset="100%" stop-color="#566ba8"/>
+            </linearGradient>
+            <linearGradient id="lionMane" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#fff2d5"/>
+              <stop offset="100%" stop-color="#b6c8ef"/>
+            </linearGradient>
+          </defs>
+
+          <!-- Fountain stream -->
+          <path class="water-stream"
+                d="M35 32 Q16 23 5 13"
+                fill="none" stroke="#91dcff" stroke-width="3.5" stroke-linecap="round"/>
+          <path d="M31 29 Q16 21 7 14"
+                fill="none" stroke="#effbff" stroke-width="1.2" stroke-linecap="round"/>
+
+          <!-- Fish tail -->
+          <path d="M43 108 Q17 105 12 88 Q30 87 40 96
+                   Q22 78 30 68 Q45 82 48 93"
+                fill="url(#lionBody)" stroke="#9fbaf0" stroke-width="1.8"/>
+
+          <!-- Fish body -->
+          <path d="M39 74 Q61 65 72 83 L76 120
+                   Q58 135 37 120 L34 96 Z"
+                fill="url(#lionBody)" stroke="#c6d7ff" stroke-width="1.8"/>
+
+          <!-- Fish scales -->
+          <path d="M43 94 q6 -8 11 0 q-5 8 -11 0
+                   M56 91 q6 -8 11 0 q-5 8 -11 0
+                   M44 107 q6 -8 11 0 q-5 8 -11 0
+                   M57 105 q6 -8 11 0 q-5 8 -11 0"
+                fill="none" stroke="#e4edff" stroke-width="1.5"/>
+
+          <!-- Lion mane -->
+          <path d="M32 19 L22 12 L27 27 L17 31 L29 38
+                   L24 48 L37 46 L43 56 L52 46 L64 48
+                   L60 37 L69 30 L58 25 L60 14 L47 20 Z"
+                fill="url(#lionMane)" stroke="#d7e4ff" stroke-width="1.5"/>
+
+          <!-- Lion face -->
+          <path d="M34 21 Q42 14 53 21 L60 31
+                   L55 42 Q46 49 36 41 L30 31 Z"
+                fill="#f6f2e9" stroke="#d2dcf5" stroke-width="1.5"/>
+
+          <!-- Ears -->
+          <path d="M33 24 L27 17 L28 30 Z M52 22 L58 16 L57 30 Z"
+                fill="#d9e5ff" stroke="#b8c9ef" stroke-width="1.2"/>
+
+          <!-- Eyes and nose -->
+          <circle cx="39" cy="29" r="2" fill="#28345c"/>
+          <circle cx="50" cy="29" r="2" fill="#28345c"/>
+          <path d="M41 35 Q45 32 49 35 L45 38 Z" fill="#465783"/>
+          <path d="M45 38 L45 41" stroke="#6677a9" stroke-width="1.5"/>
+          <path d="M40 42 Q45 46 50 42" fill="none" stroke="#6677a9" stroke-width="1.5" stroke-linecap="round"/>
+
+          <!-- Pedestal -->
+          <path d="M29 121 L73 121 L80 134 L23 134 Z"
+                fill="#647bb4" stroke="#b7cbf5" stroke-width="1.5"/>
+          <path d="M20 135 L83 135 L87 143 L16 143 Z"
+                fill="#43568d" stroke="#a6bdf0" stroke-width="1.5"/>
+          <path d="M24 138 L79 138" stroke="#d5e5ff" stroke-width="1.2"/>
+
+          <!-- Water sparkles -->
+          <circle cx="12" cy="10" r="2" fill="#dff8ff"/>
+          <circle cx="20" cy="17" r="1.5" fill="#91dcff"/>
+          <circle cx="9" cy="22" r="1.3" fill="#fff"/>
+        </svg>
+
+        <div class="building b5"></div>
+        <div class="building b6"></div>
+      </div>
+
+      <div class="caption" id="arrivalCaption" style="display:none;">
+        A LITTLE CITY, A LOT OF LOVE ♡
+      </div>
+    </div>
+
+    <button class="next-button" id="nextButton">
+      Discover the next star ✨
+    </button>
+  </section>
+
+  <script>
+    const planeButton = document.getElementById("planeButton");
+    const intro = document.getElementById("intro");
+    const journey = document.getElementById("journey");
+    const wishContent = document.getElementById("wishContent");
+    const journeyStar = document.getElementById("journeyStar");
+    const journeyTitle = document.getElementById("journeyTitle");
+    const journeyMessage = document.getElementById("journeyMessage");
+    const nextButton = document.getElementById("nextButton");
+    const skyline = document.getElementById("skyline");
+    const arrivalCaption = document.getElementById("arrivalCaption");
+
+    const musicButton = document.getElementById("musicButton");
+    const musicIcon = document.getElementById("musicIcon");
+    const musicLabel = document.getElementById("musicLabel");
+
+    const wishes = [
+      {
+        title: "A Little Wish for You 🩵",
+        message: "ขอให้ที่รักมีความสุขกับการเดินทางครั้งนี้นะคะ 🩵✈️"
+      },
+      {
+        title: "Beautiful Memories ✨",
+        message: "ขอให้ได้พบเจอกับช่วงเวลาและความทรงจำที่สวยงาม ได้ใช้เวลาพักผ่อนอยู่กับครอบครัวอย่างเต็มที่ และเติมพลังให้ตัวเองในช่วงวันหยุดนะคะ ☁️💜"
+      },
+      {
+        title: "Don't Forget to Eat! 🍰",
+        message: "แล้วก็ที่สำคัญที่สุดดดด อีทให้เยอะ ๆ เลยนะคะ! 🍰 เติมพลังให้ตัวเองเยอะ ๆ แล้วก็ถ่ายรูปมายั่วกันด้วยยยย 55555 🤏🏻🤤"
+      },
+      {
+        title: "I'm Always Here for You 💗",
+        message: "รักและคิดถึงนะคะ จะอยู่เป็นกำลังใจให้ตรงนี้เสมอเลย มีอะไรอยากเล่า อยากบ่น หรืออยากคุยด้วย ก็ทักมาได้ตลอดเลยนะคะ\nจุ๊บ ๆ ๆ 😚💋💋"
+      }
+    ];
+
+    let currentWish = 0;
+    let stage = "intro";
+    let isChanging = false;
+
+    /* Soft, original piano-like melody generated locally.
+       No external audio file is needed. */
+    let audioContext = null;
+    let masterGain = null;
+    let musicTimer = null;
+    let musicOn = false;
+    let noteIndex = 0;
+
+    const melody = [
+      [261.63, 329.63, 392.00],
+      [293.66, 349.23, 440.00],
+      [261.63, 329.63, 392.00],
+      [220.00, 293.66, 349.23],
+      [246.94, 329.63, 392.00],
+      [220.00, 293.66, 369.99],
+      [196.00, 261.63, 329.63],
+      [220.00, 293.66, 349.23]
+    ];
+
+    function playSoftNote(frequency, startTime, duration, volume) {
+      if (!audioContext || !masterGain) return;
+
+      const oscillator = audioContext.createOscillator();
+      const noteGain = audioContext.createGain();
+
+      oscillator.type = "sine";
+      oscillator.frequency.setValueAtTime(frequency, startTime);
+
+      noteGain.gain.setValueAtTime(0.0001, startTime);
+      noteGain.gain.exponentialRampToValueAtTime(volume, startTime + 0.04);
+      noteGain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+
+      oscillator.connect(noteGain);
+      noteGain.connect(masterGain);
+
+      oscillator.start(startTime);
+      oscillator.stop(startTime + duration + 0.05);
+    }
+
+    function playMusicBar() {
+      if (!audioContext || !musicOn) return;
+
+      const now = audioContext.currentTime;
+      const chord = melody[noteIndex % melody.length];
+
+      /* Gentle arpeggio */
+      chord.forEach((frequency, index) => {
+        playSoftNote(frequency, now + index * 0.42, 2.2, 0.075);
+      });
+
+      /* A higher, delicate melody note */
+      const topNotes = [523.25, 493.88, 440.00, 392.00, 440.00, 392.00, 349.23, 392.00];
+      playSoftNote(topNotes[noteIndex % topNotes.length], now + 0.8, 2.8, 0.045);
+
+      noteIndex++;
+    }
+
+    async function startMusic() {
+      try {
+        if (!audioContext) {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (!AudioContextClass) {
+            musicLabel.textContent = "เบราว์เซอร์ไม่รองรับเสียง";
+            return;
+          }
+
+          audioContext = new AudioContextClass();
+          masterGain = audioContext.createGain();
+          masterGain.gain.value = 0.0001;
+          masterGain.connect(audioContext.destination);
+        }
+
+        await audioContext.resume();
+
+        musicOn = true;
+        masterGain.gain.cancelScheduledValues(audioContext.currentTime);
+        masterGain.gain.setTargetAtTime(0.22, audioContext.currentTime, 1.2);
+
+        musicButton.classList.add("playing");
+        musicIcon.textContent = "♫";
+        musicLabel.textContent = "ปิดเพลง";
+
+        if (musicTimer) clearInterval(musicTimer);
+        playMusicBar();
+        musicTimer = setInterval(playMusicBar, 3200);
+      } catch (error) {
+        musicLabel.textContent = "แตะเพื่อเปิดเพลง";
+      }
+    }
+
+    function stopMusic() {
+      musicOn = false;
+
+      if (musicTimer) {
+        clearInterval(musicTimer);
+        musicTimer = null;
+      }
+
+      if (audioContext && masterGain) {
+        masterGain.gain.cancelScheduledValues(audioContext.currentTime);
+        masterGain.gain.setTargetAtTime(0.0001, audioContext.currentTime, 0.35);
+      }
+
+      musicButton.classList.remove("playing");
+      musicIcon.textContent = "♫";
+      musicLabel.textContent = "เปิดเพลง";
+    }
+
+    musicButton.addEventListener("click", () => {
+      if (musicOn) stopMusic();
+      else startMusic();
+    });
+
+    planeButton.addEventListener("click", () => {
+      if (stage !== "intro") return;
+
+      stage = "wishes";
+      planeButton.classList.add("flying");
+      intro.classList.add("leaving");
+
+      musicButton.classList.add("visible");
+      startMusic();
+
+      setTimeout(() => {
+        intro.style.display = "none";
+        journey.classList.add("show");
+        showWish();
+      }, 1350);
+    });
+
+    function animateContent(update) {
+      if (isChanging) return;
+      isChanging = true;
+
+      wishContent.classList.remove("changing");
+      void wishContent.offsetWidth;
+      wishContent.classList.add("changing");
+
+      setTimeout(() => {
+        update();
+        wishContent.classList.remove("changing");
+        void wishContent.offsetWidth;
+        wishContent.style.animation = "none";
+        void wishContent.offsetWidth;
+        wishContent.style.animation = "";
+        wishContent.style.animation = "wishIn .75s cubic-bezier(.2,.7,.2,1) both";
+        isChanging = false;
+      }, 230);
+    }
+
+    function showWish() {
+      const wish = wishes[currentWish];
+
+      journeyStar.textContent = "✦";
+      journeyTitle.textContent = wish.title;
+      journeyMessage.textContent = wish.message;
+
+      skyline.classList.remove("show");
+      arrivalCaption.style.display = "none";
+      nextButton.style.display = "inline-block";
+
+      nextButton.textContent =
+        currentWish === wishes.length - 1
+          ? "Continue to Singapore ✈️"
+          : "Discover the next star ✨";
+    }
+
+    nextButton.addEventListener("click", () => {
+      if (isChanging) return;
+
+      if (stage === "wishes") {
+        if (currentWish < wishes.length - 1) {
+          animateContent(() => {
+            currentWish++;
+            showWish();
+          });
+        } else {
+          animateContent(showTransit);
+        }
+      } else if (stage === "transit") {
+        animateContent(showSingapore);
+      }
+    });
+
+    function showTransit() {
+      stage = "transit";
+      journeyStar.textContent = "✈️";
+      journeyTitle.textContent = "Next stop: Singapore 🇸🇬";
+      journeyMessage.textContent =
+        "One little plane, carrying lots of love.\nYour destination is just ahead. 🩵☁️";
+      nextButton.textContent = "Arrive in Singapore ♡";
+    }
+
+    function showSingapore() {
+      stage = "arrival";
+      journeyStar.textContent = "🇸🇬 ✦";
+      journeyTitle.textContent = "Welcome to Singapore, My Love! 🇸🇬🩵";
+
+      journeyMessage.textContent =
+        "หวังว่าการเดินทางครั้งนี้จะทำให้ที่รักมีความสุข ได้ใช้เวลาอยู่กับครอบครัวอย่างเต็มที่ ได้พักผ่อนอย่างสบายใจ และเติมเต็มหัวใจของตัวเองให้เต็มไปด้วยความสุขนะคะ 🩵🩵\n\n" +
+        "สุดท้ายนี้ ขอให้เดินทางปลอดภัยทั้งไปและกลับเลยนะคะ ดูแลตัวเองดี ๆ ด้วยน้าาา\n\n" +
+        "รักและคิดถึงเสมอเลยนะคะ My Boo 🫶🏻🍰💗";
+
+      skyline.classList.add("show");
+      arrivalCaption.style.display = "block";
+      nextButton.style.display = "none";
+    }
+  </script>
+
+</body>
+</html>
